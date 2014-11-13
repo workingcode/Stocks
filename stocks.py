@@ -160,6 +160,7 @@ def maxDayPercentDecrease(args):
 '''
 This is assumed to be bought for the opening price.
 '''	
+
 def moneyMade(stockName,date,amount):
     #print 'max_day_increase'
     fileName = './stocks/' +stockName + '.csv'
