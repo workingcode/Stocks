@@ -4,6 +4,7 @@ import fnmatch
 import os
 import urllib2
 import csv
+import operator
 
 		
 def refreshStocks():
@@ -15,7 +16,7 @@ def listStocks():
 	for file in os.listdir('./stocks/'):
 		if fnmatch.fnmatch(file, '*.csv'):
 			fileName = file.split('.',1)[0]
-			print fileName
+			#print fileName
 			listOfStocks.append(fileName)
 	return listOfStocks
 
@@ -156,14 +157,64 @@ def maxDayPercentDecrease(args):
 	#FOO: 2013-10-23 open = 22.00 close = 100.00 diff = 78.00
 	print args[0] +':'+bestDate +' open = ' + openPrice + ' close = ' + closePrice + ' diff =' + str(mod(maxDifference)) + '%'
 	
+'''
+This is assumed to be bought for the opening price.
+'''	
+def moneyMade(stockName,date,amount):
+    #print 'max_day_increase'
+    fileName = './stocks/' +stockName + '.csv'
+    numberOfUnits=0.0
+    with open(fileName, 'rb') as f:
+		reader = csv.reader(f)
+		reader.next()
+		finalValue = reader.next()
+		moneyMade = float(amount)
+		if finalValue[0] is date:
+			return amount
+		for row in reader:
+			try:
+				if row[0] == date:
+					numberOfUnits = float(amount)/float(row[1])
+					moneyMade = numberOfUnits*float(finalValue[1])
+					return moneyMade
+			except ValueError:
+				pass
+			except:
+				pass
+    return " data not available for " +date + ", choose different date "
+	
 def whatIf(args):
 	print 'what_if'
-
+	investedDate = args.pop(0)
+	investedAmount = args.pop(0)
+	investCompanyList = args
+	for eachCompany in investCompanyList:
+		print eachCompany+':'+str(moneyMade(eachCompany,investedDate,investedAmount))
+	
+def getPercentDifferenceOnLastDate(stockName):
+    #print 'max_day_increase'
+    fileName = './stocks/' + stockName + '.csv'
+    maxPercentDifference = 0.0
+    with open(fileName, 'rb') as f:
+		reader = csv.reader(f)
+		reader.next()
+		data = reader.next()
+		maxPercentDifference = mod(((float(data[4])-float(data[1]))/float(data[1]))*100)
+    return maxPercentDifference
+	
 def top3():
-	print 'top3'
 	allStocksAvailable = listStocks()
+	topStock = {}
 	for eachStock in allStocksAvailable:
-		print eachStock
+		topStock[getPercentDifferenceOnLastDate(eachStock)] = eachStock
+	topStock = sorted(topStock.items(), key=operator.itemgetter(0))
+	topStock = list(reversed(topStock))
+	try:
+		print topStock[0][1] #top stock - 1
+		print topStock[1][1] #top stock - 2
+		print topStock[2][1] #top stock - 3
+	except:
+		pass
 
 def main(args):
 	command = args[1]
@@ -172,7 +223,8 @@ def main(args):
 	args.pop(0)
 	if command == 'list':
 		print 'List the stocks available for analysis:' 
-		listStocks()
+		for eachStock in listStocks():
+			print eachStock
 	elif command == 'download':
 		downloadStocks(args)
 	elif command == 'refresh':
